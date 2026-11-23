@@ -1,0 +1,27 @@
+@{ ViewData["Title"] = "Explorar misiones"; }
+<section class="page-intro"><div><span class="eyebrow">DESCUBRE TU UNIVERSIDAD</span><h1>Explorar <span>misiones.</span></h1><p>Pequeños desafíos, nuevas experiencias. Elige un reto y descubre algo nuevo en tu campus.</p></div><div class="intro-symbol">🧭</div></section>
+<section class="mission-toolbar"><div class="mission-summary"><strong id="mission-visible-count">00</strong><span>misiones disponibles</span></div><div class="filter-controls"><label class="visually-hidden" for="filtro-misiones">Filtrar misiones</label><select id="filtro-misiones" class="filter-select"><option value="Todas">Todas las categorías</option><option>Biblioteca</option><option>Cultura</option><option>Tecnología</option><option>Deportes</option><option>Naturaleza</option></select><label class="visually-hidden" for="buscar-mision">Buscar misión</label><input id="buscar-mision" class="filter-search" type="search" placeholder="Buscar misión..." /></div></section>
+<div class="mission-grid" id="contenedor-misiones"><p class="empty-admin">Cargando misiones...</p></div>
+<div id="sin-resultados" class="empty-state" hidden><span>🔎</span><h3>No encontramos misiones</h3><p>Prueba con otra palabra o categoría.</p></div>
+<section class="proposal-panel" id="misiones-pendientes">
+    <div class="proposal-heading"><span class="feature-icon green">◷</span><div><span class="eyebrow">TU ACTIVIDAD</span><h2>Misiones pendientes</h2><p>Retos que todavía puedes completar. Cada avance pertenece únicamente a tu cuenta.</p></div></div>
+    <div id="lista-misiones-pendientes" class="pending-missions-list"><p>Cargando tus misiones pendientes...</p></div>
+</section>
+<section class="proposal-panel" id="proponer"><div class="proposal-heading"><span class="feature-icon green">✚</span><div><span class="eyebrow">TÚ TAMBIÉN PUEDES PARTICIPAR</span><h2>Propón una misión</h2><p>Cada misión incluye la insignia que se obtiene al completarla. El administrador la revisa y puede ajustar ambas.</p></div></div>
+<form id="form-mision" class="proposal-form" novalidate>
+    <div class="form-grid">
+        <div><label for="nombre-mision">Nombre de la misión</label><input id="nombre-mision" name="nombre" maxlength="40" minlength="3" placeholder="Ej. Ruta del jardín botánico" required /><span class="error-campo" id="error-nombre"></span></div>
+        <div><label for="categoria-mision">Categoría</label><select id="categoria-mision" name="categoria" required><option value="">Selecciona una categoría</option><option>Biblioteca</option><option>Cultura</option><option>Tecnología</option><option>Deportes</option><option>Naturaleza</option><option>Comunidad</option><option>Otra</option></select><span class="error-campo" id="error-categoria"></span></div>
+        <div><label for="lugar-mision">Lugar del campus</label><input id="lugar-mision" name="lugar" minlength="3" maxlength="40" placeholder="Ej. Edificio de ingeniería" /><span class="error-campo" id="error-lugar"></span></div>
+        <div><label for="dificultad-mision">Dificultad</label><select id="dificultad-mision" name="dificultad"><option value="">Selecciona dificultad</option><option>Fácil</option><option>Media</option><option>Difícil</option></select><span class="error-campo" id="error-dificultad"></span></div>
+        <div class="form-wide"><label for="descripcion-mision">Descripción <small id="contador-descripcion">0/120</small></label><textarea id="descripcion-mision" name="descripcion" rows="3" minlength="10" maxlength="120" placeholder="Describe qué hay que hacer en la misión." required></textarea><span class="error-campo" id="error-descripcion"></span></div>
+        <div><label for="insignia-nombre">Nombre de la insignia</label><input id="insignia-nombre" name="insigniaNombre" minlength="3" maxlength="60" placeholder="Ej. Guardián del jardín" /><span class="error-campo" id="error-insigniaNombre"></span></div>
+        <div><label for="insignia-icono">Icono de la insignia</label><select id="insignia-icono" name="insigniaIcono"><option>🏅</option><option>📚</option><option>🎨</option><option>🔬</option><option>⚽</option><option>🌿</option><option>🤝</option><option>⭐</option><option>🧭</option></select></div>
+    </div>
+    <div class="form-footer"><p>Tu propuesta quedará pendiente de revisión por el administrador.</p><button type="submit" class="btn-primary-custom">Enviar propuesta <span>↗</span></button></div>
+    <p id="mensaje-mision" class="form-feedback" role="status" hidden></p>
+</form></section>
+<section class="proposal-panel" id="mis-propuestas">
+    <div class="proposal-heading"><span class="feature-icon green">☰</span><div><span class="eyebrow">SEGUIMIENTO</span><h2>Mis propuestas</h2><p>Aquí ves si tus propuestas están en revisión, fueron aceptadas o rechazadas.</p></div></div>
+    <div id="lista-mis-propuestas" class="my-proposals"><p>Cargando tus propuestas...</p></div>
+</section>

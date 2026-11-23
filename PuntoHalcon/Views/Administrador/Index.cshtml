@@ -1,0 +1,81 @@
+@using Dominio.Entidades
+@using Dominio.Enum
+@using PuntoHalcon.Helpers
+@{
+    ViewData["Title"] = "Administración";
+    var misiones = ViewBag.Misiones as List<Mision> ?? new();
+    var sueltas = ViewBag.InsigniasSueltas as List<Insignia> ?? new();
+    var pendientes = misiones.Where(x => x.EsPropuesta && !x.Rechazada).ToList();
+    var rechazadas = misiones.Where(x => x.Rechazada).ToList();
+    var publicadas = misiones.Where(x => !x.EsPropuesta).ToList();
+    var sueltasPendientes = sueltas.Where(x => x.EsPropuesta).ToList();
+    var sueltasPublicadas = sueltas.Where(x => !x.EsPropuesta).ToList();
+    var totalInsignias = misiones.SelectMany(x => x.Insignias).Count(i => !i.EsPropuesta) + sueltasPublicadas.Count;
+    var iconos = new[] { "🏅", "📚", "🎨", "🔬", "⚽", "🌿", "🤝", "⭐", "🧭", "🏆", "🎯", "💡" };
+    ViewData["Misiones"] = publicadas;
+    ViewData["Completadas"] = ViewBag.Completadas;
+    ViewData["CodigoDefecto"] = ViewBag.CodigoDefecto; // lo usa el parcial de insignias sueltas
+    string Cat(CategoriaMision c) => c == CategoriaMision.Tecnologia ? "Tecnología" : c.ToString();
+    string Dif(DificultadMision d) => d == DificultadMision.Facil ? "Fácil" : d == DificultadMision.Dificil ? "Difícil" : "Media";
+}
+<section class="page-intro"><div><span class="eyebrow">PANEL DE CONTROL</span><h1>Administración</h1><p>Revisa las propuestas y administra misiones, insignias y códigos.</p></div></section>
+
+@if (TempData["Mensaje"] is string ok) { <p class="admin-alert ok" role="status">@ok</p> }
+@if (TempData["Error"] is string err) { <p class="admin-alert error" role="alert">@err</p> }
+
+<div class="admin-stats">
+    <article><strong>@publicadas.Count</strong><span>Misiones publicadas</span></article>
+    <article><strong>@totalInsignias</strong><span>Insignias publicadas</span></article>
+    <article><strong>@(pendientes.Count + sueltasPendientes.Count)</strong><span>Propuestas por revisar</span></article>
+</div>
+
+<details class="admin-create">
+    <summary>＋ Nueva misión con su insignia</summary>
+    <form method="post" asp-action="CrearMision" class="admin-form-grid">
+        <div><label>Nombre de la misión</label><input name="nombre" required minlength="3" maxlength="40" /></div>
+        <div><label>Lugar</label><input name="lugar" required minlength="3" maxlength="40" /></div>
+        <div><label>Categoría</label><select name="categoria">@foreach (var c in Enum.GetValues<CategoriaMision>()) { <option value="@((int)c)">@Cat(c)</option> }</select></div>
+        <div><label>Dificultad</label><select name="dificultad">@foreach (var d in Enum.GetValues<DificultadMision>()) { <option value="@((int)d)">@Dif(d)</option> }</select></div>
+        <div class="wide"><label>Descripción</label><textarea name="descripcion" required minlength="10" maxlength="120" rows="2"></textarea></div>
+        <div class="wide"><label>Código de verificación <small>(si lo dejas vacío se genera uno)</small></label><input name="codigo" maxlength="40" pattern="[A-Za-z0-9_\-]{4,40}" placeholder="Ej. HALCON-2026" title="De 4 a 40 caracteres: letras, números, guion o guion bajo" /></div>
+        <div class="wide admin-subtitle">Insignia que se obtiene al completarla</div>
+        <div><label>Nombre de la insignia</label><input name="insigniaNombre" required minlength="3" maxlength="60" /></div>
+        <div><label>Icono</label><select name="insigniaIcono">@foreach (var i in iconos) { <option>@i</option> }</select></div>
+        <div class="wide"><button class="btn-approve" type="submit">Publicar misión</button></div>
+    </form>
+</details>
+
+<section class="admin-section">
+    <div class="section-heading"><div><span class="eyebrow">POR REVISAR</span><h2>Propuestas de estudiantes</h2></div></div>
+    @if (!pendientes.Any() && !sueltasPendientes.Any()) { <p class="empty-admin">No hay propuestas pendientes.</p> }
+    @foreach (var m in pendientes) { <partial name="_MisionItem" model="m" /> }
+    @foreach (var b in sueltasPendientes)
+    {
+        <partial name="_InsigniaSueltaItem" model="b" />
+    }
+</section>
+
+@if (rechazadas.Any())
+{
+    <section class="admin-section">
+        <div class="section-heading"><div><span class="eyebrow">ARCHIVO</span><h2>Propuestas rechazadas</h2></div></div>
+        @foreach (var m in rechazadas) { <partial name="_MisionItem" model="m" /> }
+    </section>
+}
+
+<section class="admin-section">
+    <div class="section-heading"><div><span class="eyebrow">CONTENIDO</span><h2>Misiones publicadas</h2></div></div>
+    @if (!publicadas.Any()) { <p class="empty-admin">No hay misiones publicadas.</p> }
+    @foreach (var m in publicadas) { <partial name="_MisionItem" model="m" /> }
+</section>
+
+@if (sueltasPublicadas.Any())
+{
+    <section class="admin-section">
+        <div class="section-heading"><div><span class="eyebrow">CONTENIDO</span><h2>Logros especiales</h2><p class="empty-admin">Insignias sin misión propia: se obtienen al completar @Logros.MisionesParaLogroEspecial misiones.</p></div></div>
+        @foreach (var b in sueltasPublicadas)
+        {
+            <partial name="_InsigniaSueltaItem" model="b" />
+        }
+    </section>
+}

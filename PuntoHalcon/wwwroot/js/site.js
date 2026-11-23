@@ -1,0 +1,1 @@
+document.addEventListener('DOMContentLoaded',()=>{document.querySelectorAll('form[onsubmit]').forEach(f=>f.addEventListener('submit',e=>{if(!confirm('¿Deseas continuar?'))e.preventDefault();}));});

@@ -1,0 +1,41 @@
+@using Dominio.Entidades
+@using PuntoHalcon.Helpers
+@model Insignia
+@{
+    var misiones = ViewData["Misiones"] as List<Mision> ?? new();
+    var iconos = new[] { "🏅", "📚", "🎨", "🔬", "⚽", "🌿", "🤝", "⭐", "🧭", "🏆", "🎯", "💡" };
+    var autor = !string.IsNullOrWhiteSpace(Model.Usuario?.Apodo) ? Model.Usuario!.Apodo : (Model.Usuario?.Nombre ?? "Estudiante");
+}
+<article class="admin-item">
+    <div class="admin-main">
+        <span class="admin-tag">@(Model.EsPropuesta ? "INSIGNIA PENDIENTE" : "PUBLICADA") · @Model.Etiqueta</span>
+        @if (Model.EsPropuesta) { <small class="proposal-author">Enviada por: @autor · @Model.Usuario?.Correo</small> }
+        <h3>@Model.Icono @Model.Nombre</h3>
+        <p>@Model.Descripcion</p>
+        @if (Model.EsPropuesta) { <small>Antes de publicarla, asóciala a una misión en “Modificar”.</small> }
+        else { <small>Se obtiene al completar @Logros.MisionesParaLogroEspecial misiones.</small> }
+    </div>
+    <div class="admin-actions">
+        @if (Model.EsPropuesta)
+        {
+            <form method="post" asp-action="AprobarInsignia"><input type="hidden" name="id" value="@Model.InsigniaId" /><button class="btn-approve" type="submit">Aceptar</button></form>
+        }
+        <form method="post" asp-action="EliminarInsignia" data-confirm="¿Eliminar la insignia «@Model.Nombre»? Esta acción no se puede deshacer." onsubmit="return confirm(this.dataset.confirm)"><input type="hidden" name="id" value="@Model.InsigniaId" /><button class="btn-delete" type="submit">Eliminar</button></form>
+    </div>
+    <details class="admin-edit">
+        <summary>Modificar insignia</summary>
+        <form method="post" asp-action="EditarInsignia" class="admin-form-grid">
+            <input type="hidden" name="id" value="@Model.InsigniaId" />
+            <div><label>Nombre</label><input name="nombre" value="@Model.Nombre" required minlength="3" maxlength="60" /></div>
+            <div><label>Icono</label><select name="icono">@foreach (var i in iconos.Contains(Model.Icono) ? iconos : iconos.Append(Model.Icono).ToArray()) { <option selected="@(i == Model.Icono)">@i</option> }</select></div>
+            <div><label>Categoría</label><input name="etiqueta" value="@Model.Etiqueta" required maxlength="30" /></div>
+            <div><label>Misión asociada</label>
+                <select name="misionId">
+                    <option value="" selected="@(Model.MisionId == null)">Ninguna (logro especial)</option>
+                    @foreach (var m in misiones) { <option value="@m.MisionId" selected="@(Model.MisionId == m.MisionId)">@m.Nombre</option> }
+                </select></div>
+            <div class="wide"><label>Descripción</label><input name="descripcion" value="@Model.Descripcion" required minlength="10" maxlength="120" /></div>
+            <div class="wide"><button class="btn-approve" type="submit">Guardar cambios</button></div>
+        </form>
+    </details>
+</article>

@@ -1,0 +1,77 @@
+@using Dominio.Entidades
+@using Dominio.Enum
+@model Mision
+@{
+    var b = Model.Insignias.FirstOrDefault();
+    var iconos = new[] { "🏅", "📚", "🎨", "🔬", "⚽", "🌿", "🤝", "⭐", "🧭", "🏆", "🎯", "💡" };
+    var iconoActual = b?.Icono ?? "🏅";
+    string Cat(CategoriaMision c) => c == CategoriaMision.Tecnologia ? "Tecnología" : c.ToString();
+    string Dif(DificultadMision d) => d == DificultadMision.Facil ? "Fácil" : d == DificultadMision.Dificil ? "Difícil" : "Media";
+    var completadas = ViewData["Completadas"] as Dictionary<int, int> ?? new();
+    var nCompletadas = completadas.TryGetValue(Model.MisionId, out var nc) ? nc : 0;
+    var codigoDefecto = ViewData["CodigoDefecto"] as string ?? "";
+    var usaCodigoDefecto = !Model.EsPropuesta && !string.IsNullOrEmpty(codigoDefecto) && string.Equals(Model.Codigo, codigoDefecto, StringComparison.OrdinalIgnoreCase);
+    var avisoEliminar = $"¿Eliminar «{Model.Nombre}» y su insignia? " + (nCompletadas > 0 ? $"{nCompletadas} estudiante(s) ya la completaron y perderán ese progreso. " : "") + "Esta acción no se puede deshacer.";
+    var autor = !string.IsNullOrWhiteSpace(Model.Usuario?.Apodo) ? Model.Usuario!.Apodo : (Model.Usuario?.Nombre ?? "Estudiante");
+}
+<article class="admin-item">
+    <div class="admin-main">
+        <span class="admin-tag">@(Model.Rechazada ? "RECHAZADA" : Model.EsPropuesta ? "PENDIENTE" : "PUBLICADA") · @Cat(Model.Categoria) · @Dif(Model.Dificultad)</span>
+        @if (Model.EsPropuesta) { <small class="proposal-author">Enviada por: @autor · @Model.Usuario?.Correo</small> }
+        <h3>@Model.Nombre</h3>
+        <p>@Model.Descripcion</p>
+        @if (Model.Rechazada && !string.IsNullOrWhiteSpace(Model.NotaAdmin)) { <small>Motivo del rechazo: @Model.NotaAdmin</small> }
+        <div class="admin-meta">
+            <span>📍 @Model.Lugar</span>
+            @if (b != null) { <span>@b.Icono @b.Nombre</span> }
+            <span class="admin-code">Código: <code>@(string.IsNullOrWhiteSpace(Model.Codigo) ? "sin asignar" : Model.Codigo)</code></span>
+            @if (usaCodigoDefecto) { <span class="admin-warn">Usa el código de demostración: cámbialo</span> }
+            @if (!Model.EsPropuesta) { <span>✔ Completada por @nCompletadas</span> }
+        </div>
+    </div>
+    <div class="admin-actions">
+        @if (Model.EsPropuesta && !Model.Rechazada)
+        {
+            <form method="post" asp-action="AprobarMision"><input type="hidden" name="id" value="@Model.MisionId" /><button class="btn-approve" type="submit">Aceptar</button></form>
+        }
+        @if (Model.Rechazada)
+        {
+            <form method="post" asp-action="ReconsiderarMision"><input type="hidden" name="id" value="@Model.MisionId" /><button class="btn-approve" type="submit">Reconsiderar</button></form>
+        }
+        @if (!Model.EsPropuesta)
+        {
+            <form method="post" asp-action="RegenerarCodigo" data-confirm="¿Generar un código nuevo? El código anterior dejará de funcionar." onsubmit="return confirm(this.dataset.confirm)"><input type="hidden" name="id" value="@Model.MisionId" /><button class="btn-approve" type="submit">Nuevo código</button></form>
+        }
+        <form method="post" asp-action="EliminarMision" data-confirm="@avisoEliminar" onsubmit="return confirm(this.dataset.confirm)"><input type="hidden" name="id" value="@Model.MisionId" /><button class="btn-delete" type="submit">Eliminar</button></form>
+    </div>
+    @if (Model.EsPropuesta && !Model.Rechazada)
+    {
+        <details class="admin-reject">
+            <summary>Rechazar propuesta</summary>
+            <form method="post" asp-action="RechazarMision">
+                <input type="hidden" name="id" value="@Model.MisionId" />
+                <input name="nota" maxlength="200" placeholder="Motivo para el estudiante (opcional)" />
+                <button class="btn-delete" type="submit">Confirmar rechazo</button>
+            </form>
+        </details>
+    }
+    <details class="admin-edit">
+        <summary>Modificar misión e insignia</summary>
+        <form method="post" asp-action="EditarMision" class="admin-form-grid">
+            <input type="hidden" name="id" value="@Model.MisionId" />
+            <input type="hidden" name="insigniaId" value="@b?.InsigniaId" />
+            <div><label>Nombre de la misión</label><input name="nombre" value="@Model.Nombre" required minlength="3" maxlength="40" /></div>
+            <div><label>Lugar</label><input name="lugar" value="@Model.Lugar" required minlength="3" maxlength="40" /></div>
+            <div><label>Categoría</label><select name="categoria">@foreach (var c in Enum.GetValues<CategoriaMision>()) { <option value="@((int)c)" selected="@(c == Model.Categoria)">@Cat(c)</option> }</select></div>
+            <div><label>Dificultad</label><select name="dificultad">@foreach (var d in Enum.GetValues<DificultadMision>()) { <option value="@((int)d)" selected="@(d == Model.Dificultad)">@Dif(d)</option> }</select></div>
+            <div class="wide"><label>Descripción</label><textarea name="descripcion" required minlength="10" maxlength="120" rows="2">@Model.Descripcion</textarea></div>
+            <div class="wide"><label>Código de verificación <small>(solo lo ve el administrador; si lo dejas vacío en una propuesta, se genera al aceptarla)</small></label><input name="codigo" value="@Model.Codigo" maxlength="40" pattern="[A-Za-z0-9_\-]{4,40}" placeholder="Ej. HALCON-2026" title="De 4 a 40 caracteres: letras, números, guion o guion bajo" /></div>
+            <div class="wide admin-subtitle">Insignia que se obtiene al completarla</div>
+            <div><label>Nombre de la insignia</label><input name="insigniaNombre" value="@b?.Nombre" maxlength="60" /></div>
+            <div><label>Icono</label><select name="insigniaIcono">@foreach (var i in iconos.Contains(iconoActual) ? iconos : iconos.Append(iconoActual).ToArray()) { <option selected="@(i == iconoActual)">@i</option> }</select></div>
+            <div><label>Categoría de la insignia</label><input name="insigniaEtiqueta" value="@b?.Etiqueta" maxlength="30" /></div>
+            <div class="wide"><label>Descripción de la insignia</label><input name="insigniaDescripcion" value="@(b?.Descripcion ?? $"Completa la misión «{Model.Nombre}».")" maxlength="120" /></div>
+            <div class="wide"><button class="btn-approve" type="submit">Guardar cambios</button></div>
+        </form>
+    </details>
+</article>
